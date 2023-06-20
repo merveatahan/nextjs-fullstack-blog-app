@@ -2,23 +2,13 @@ import db from "@/lib/db";
 import { verifyJwtToken } from "@/lib/jwt";
 import Blog from "@/models/Blog";
 
-export async function GET(req) {
+export async function PUT(req, res) {
   await db.connect();
-
-  try {
-    const blogs = await Blog.find({}).limit(16).populate("authorId");
-    return new Response(JSON.stringify(blogs), { status: 200 });
-  } catch (error) {
-    return new Response(JSON.stringify(null), { status: 500 });
-  }
-}
-export async function POST(req) {
-  await db.connect();
+  const id = res.params.id;
   const accessToken = req.headers.get("authorization");
   const token = accessToken.split(" ")[1];
 
   const decodedToken = verifyJwtToken(token);
-
   if (!accessToken || !decodedToken) {
     return new Response(
       JSON.stringify({ error: "unauthorized (wrong or expired token)" }),
@@ -26,12 +16,24 @@ export async function POST(req) {
     );
   }
   try {
-    const body = await req.json();
-    const newBlog = await Blog.create(body);
+    const blog = await Blog.findById(id);
 
-    return new Response(JSON.stringify(newBlog), { status: 201 });
+    if (blog.likes.includes(decodedToken._id)) {
+      blog.likes = blog.likes.filter(
+        (id) => id.toString() === decodedToken._id.toString()
+      );
+    } else {
+      blog.likes.push(decodedToken._id);
+    }
+
+    await blog.save();
+
+    return new Response(
+      JSON.stringify({ message: "Successfully interacted with the blog" }),
+      { status: 200 }
+    );
   } catch (error) {
     return new Response(JSON.stringify(null), { status: 500 });
   }
 }
-// oluşacak link : http://localhost:3000/api/blog
+// oluşacak link : http://localhost:3000/api/blog/someId/like
