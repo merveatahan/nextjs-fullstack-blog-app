@@ -27,7 +27,7 @@ export const authOptions = {
           const { password, ...currentUser } = user._doc;
           const accessToken = signJwtToken(currentUser, { expiresIn: "7d" });
           const refreshToken = signRefreshToken(currentUser, {
-            expiresIn: "15m",
+            expiresIn: "1d",
           });
 
           return {

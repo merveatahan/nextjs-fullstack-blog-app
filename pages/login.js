@@ -6,7 +6,6 @@ import { useRouter } from "next/router";
 
 export default function Login() {
   const session = useSession();
-  console.log("hsn", session);
   const router = useRouter();
   const {
     register,
@@ -24,7 +23,7 @@ export default function Login() {
         redirect: false,
       });
       if (res.error == null) {
-        router.push("/");
+        router.push("/allBlogs");
       } else {
         console.log("error occured login");
       }
