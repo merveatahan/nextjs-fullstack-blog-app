@@ -1,5 +1,6 @@
 import { mongooseConnect } from "@/lib/mongoose";
 import { Blog } from "@/models/Blog";
+import { Comment } from "@/models/Comment";
 import { verifyJwtToken } from "@/lib/jwt";
 
 export default async function handler(req, res) {
@@ -11,40 +12,58 @@ export default async function handler(req, res) {
 
   const decodedToken = verifyJwtToken(token);
 
-  //   if (!accessToken || !decodedToken) {
-  //     throw new Error("Lütfen giriş yapınız");
-  //   }
-
   if (method === "GET") {
     if (req.query.id) {
-      res.json(await Blog.findById(req.query.id));
+      try {
+        const blog = await Blog.findById(req.query.id).populate("comments");
+        res.json(blog);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
     } else {
-      res.json(await Blog.find());
+      try {
+        const blogs = await Blog.find();
+        res.json(blogs);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
     }
   }
 
-  try {
-    if (method === "POST") {
-      const { title, description, imageUrl, authorId } = req.body;
+  if (method === "POST") {
+    const { title, description, imageUrl, authorId, commentText } = req.body;
 
+    try {
       if (!accessToken || !decodedToken) {
         throw new Error("Lütfen giriş yapınız");
       } else {
-        const BlogDoc = await Blog.create({
+        const blog = await Blog.create({
           title,
           description,
           imageUrl,
           authorId,
         });
-        res.json(BlogDoc);
+
+        const comment = await Comment.create({
+          blogId: blog._id,
+          authorId,
+          text: commentText,
+        });
+
+        blog.comments.push(comment._id);
+        await blog.save();
+
+        res.json(blog);
       }
+    } catch (error) {
+      res.status(403).json({ error: error.message });
     }
-  } catch (error) {
-    res.status(403).json({ error: error.message });
   }
-  try {
-    if (method === "PUT") {
-      const { title, description, imageUrl, authorId, _id } = req.body;
+
+  if (method === "PUT") {
+    const { title, description, imageUrl, authorId, _id } = req.body;
+
+    try {
       if (!accessToken || !decodedToken) {
         throw new Error("Lütfen giriş yapınız");
       } else {
@@ -59,15 +78,20 @@ export default async function handler(req, res) {
         );
         res.json(true);
       }
+    } catch (error) {
+      res.status(403).json({ error: error.message });
     }
-  } catch (error) {
-    res.status(403).json({ error: error.message });
   }
 
   if (method === "DELETE") {
     if (req.query?.id) {
-      await Blog.deleteOne({ _id: req.query?.id });
-      res.json(true);
+      try {
+        await Blog.deleteOne({ _id: req.query?.id });
+        await Comment.deleteMany({ blogId: req.query?.id });
+        res.json(true);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
     }
   }
 }

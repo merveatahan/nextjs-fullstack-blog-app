@@ -5,7 +5,7 @@ class ApiClient extends React.Component {
   constructor() {
     super();
     this.state = {
-      url: "",
+      url: "http://localhost:3000",
       response: "",
       token: undefined,
       headers: {
