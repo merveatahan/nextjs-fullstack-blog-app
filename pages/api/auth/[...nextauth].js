@@ -1,8 +1,8 @@
-import NextAuth from "next-auth";
+import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
-import User from "@/models/User";
-import { signJwtToken, signRefreshToken, verifyRefreshToken } from "@/lib/jwt";
 import bcrypt from "bcrypt";
+import { User } from "@/models/User";
+import { signJwtToken } from "@/lib/jwt";
 
 export const authOptions = {
   providers: [
@@ -12,37 +12,36 @@ export const authOptions = {
         username: { label: "Username", type: "text", placeholder: "Username" },
         password: { label: "Password", type: "text", placeholder: "Password" },
       },
+
       async authorize(credentials, req) {
         const { email, password } = credentials;
 
         const user = await User.findOne({ email });
 
         if (!user) {
-          throw new Error("Invalid input");
+          throw new Error("User not found");
         }
 
         const comparePass = await bcrypt.compare(password, user.password);
 
-        if (comparePass) {
+        if (!comparePass) {
+          throw new Error("Invalid password");
+        } else {
           const { password, ...currentUser } = user._doc;
-          const accessToken = signJwtToken(currentUser, { expiresIn: "7d" });
-          const refreshToken = signRefreshToken(currentUser, {
-            expiresIn: "1d",
-          });
+          const accessToken = signJwtToken(currentUser, { expiresIn: "5d" });
+          const refreshToken = signJwtToken(currentUser);
 
           return {
             ...currentUser,
             accessToken,
             refreshToken,
           };
-        } else {
-          throw new Error("Invalid password");
         }
       },
     }),
   ],
   pages: {
-    signIn: "/login",
+    signIn: "/LoginPage",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -50,15 +49,6 @@ export const authOptions = {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
         token._id = user._id;
-      }
-
-      // Refresh token kontrolü
-      if (token && token.refreshToken) {
-        const isRefreshTokenValid = verifyRefreshToken(token.refreshToken);
-        if (!isRefreshTokenValid) {
-          // Refresh token süresi dolduğunda otomatik çıkış yap
-          throw new Error("Refresh token expired");
-        }
       }
 
       return token;
@@ -73,6 +63,16 @@ export const authOptions = {
       return session;
     },
   },
+  jwt: {
+    maxAge: 10,
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 720,
+    cookie: {
+      maxAge: 720,
+    },
+  },
+  secret: process.env.JWT_SECRET,
 };
-
 export default NextAuth(authOptions);

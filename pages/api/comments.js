@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   const accessToken = req.headers.authorization;
   const token = accessToken?.split(" ")[1];
   const decodedToken = verifyJwtToken(token);
+  console.log("***********decode", req.query);
   // bu apide ve diğer apilerimizde bizden beklenen değerlerin
   // ne olduğunu görebilmek adına Models klasörü içinde bulunan şemalara göz atmamız gerekiyor..
   // bu apiye hem get, put, post, delete her türlü isteği gönderebiliyoruz. yani bütün işlemler tek bir apide gerçekleşiyor...
@@ -17,8 +18,8 @@ export default async function handler(req, res) {
   // aynı durum BLOGS apisi için de geçerlidir.
 
   if (method === "GET") {
-    if (req.query.id) {
-      res.json(await Comment.findById(req.query.id));
+    if (req.query.blogId) {
+      res.json(await Comment.find({ blogId: req.query.blogId }));
     } else {
       res.json(await Comment.find());
       res.status(200).json({ message: "Success!" });

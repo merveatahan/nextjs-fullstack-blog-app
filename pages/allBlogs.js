@@ -1,25 +1,28 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import BlogCard from "@/components/BlogCard";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import ApiClient from "@/interceptor";
 
-// export async function getServerSideProps(context) {
-//   console.log(context);
-//   const blogs = await axios.get("api/blogs");
-//   console.log(blogs);
-//   return {
-//     props: {},
-//   };
-// }
+export async function getServerSideProps(context) {
+  let api = new ApiClient();
+  let session = await getSession(context);
+  api.state.token = session?.user?.accessToken;
+  let blogData = [];
+  let blogs = await api.get("/api/blogs");
 
-export default function AllBlogs() {
-  const [blogs, setBlogs] = useState([]);
-  useEffect(() => {
-    axios.get("api/blogs").then((response) => {
-      setBlogs(response.data);
-    });
-  }, []);
+  if (blogs.success) {
+    blogData = blogs.data;
+  }
+  let userInfo = await api.get("/api/userinfo?id=" + session?.user?._id);
+
+  return {
+    props: { session, userInfo, blogData },
+  };
+}
+
+export default function AllBlogs(props) {
+  const session = useSession();
+  const [blogs, setBlogs] = useState(props.blogData ? props.blogData : []);
 
   //interceptor kullanarak bütün isteklerin tek bir yerde çalışmasını ve
   //bütün kontrollerin tek bir komponent üzerinden yapılmasını sağladık.
@@ -30,14 +33,6 @@ export default function AllBlogs() {
   // sonra virgül ekleyerek  bir obje içerisinde datayı göndermemiz gerekiyor.. burada dikkat etmemiz gereken şey ise ilgili apinin bizden
   //ne beklediği.. apinin bizden beklediği veriler için api klasörü altında bulunan blogs, comments, register, userinfo gibi js dosyalarına
   //göz atmamız gerekiyor. ----> kısaca apileri bir gezelim bakalım  bizden hangi verileri bekliyor??
-
-  const session = useSession();
-  const getUserId = session.data.user._id;
-  const getUser = async () => {
-    const api = new ApiClient();
-    const user = await api.get("/api/userinfo?id=" + getUserId);
-    console.log(user);
-  };
 
   return (
     <div className="flex justify-center">
