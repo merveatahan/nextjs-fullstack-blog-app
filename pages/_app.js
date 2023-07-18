@@ -1,15 +1,21 @@
-import "@/public/styles/globals.css";
-import { SessionProvider } from "next-auth/react";
-import Navbar from "@/components/Navbar";
+
 import NewNavbar from "@/components/NewNavbar";
+import { SessionProvider } from "next-auth/react";
+import "@/public/styles/globals.css";
+import store from "@/src/store";
+import { Provider } from "react-redux";
+
 export default function App({
   Component,
   pageProps: { session, ...pageProps },
 }) {
   return (
     <SessionProvider session={session}>
-      <NewNavbar />
+
+      <Provider store={store}>
+       <NewNavbar />
       <Component {...pageProps} />
+      </Provider>
     </SessionProvider>
   );
 }
