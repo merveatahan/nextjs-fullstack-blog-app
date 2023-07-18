@@ -13,6 +13,7 @@ export default function NewRegister() {
     <div className="w-full h-full flex justify-center items-center ">
       <form className="" onSubmit={handleSubmit(onSubmit)}>
         {/* register your input into the hook by invoking the "register" function */}
+        {/* register your input into the hook by invoking the "register" function */}
         <input
           defaultValue="Full Name"
           {...register("fullname", { required: true })}
