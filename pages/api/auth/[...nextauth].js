@@ -40,6 +40,7 @@ export const authOptions = {
       },
     }),
   ],
+
   pages: {
     signIn: "/LoginPage",
   },
@@ -73,6 +74,9 @@ export const authOptions = {
       maxAge: 720,
     },
   },
+
+  secret: process.env.REFRESH_TOKEN_SECRET,
   secret: process.env.JWT_SECRET,
+
 };
 export default NextAuth(authOptions);
