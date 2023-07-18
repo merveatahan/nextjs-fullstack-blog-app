@@ -41,6 +41,7 @@ export const authOptions = {
       },
     }),
   ],
+
   pages: {
     signIn: "/login",
   },
@@ -73,6 +74,17 @@ export const authOptions = {
       return session;
     },
   },
+  jwt: {
+    maxAge: 10,
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 720,
+    cookie: {
+      maxAge: 720,
+    },
+  },
+  secret: process.env.REFRESH_TOKEN_SECRET,
 };
 
 export default NextAuth(authOptions);
